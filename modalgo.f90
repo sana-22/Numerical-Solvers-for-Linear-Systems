@@ -12,87 +12,54 @@ contains
   !produit matrice vecteur
   !norme p
   !norme infinie
-  !transposée d'une matrice
+  !transposÃ©e d'une matrice
   !trace
 
-    function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
-    !variables d'entree
-    real(kind=pr),dimension(:,:),intent(in):: A       !matrice de r�solution du probleme
-    real(kind=pr),dimension(:),intent(in):: b, x0     !vecteur second membre et donn�e intiale
-    integer,intent(in):: kmax                         !test d'arret
-    real(kind=pr),intent(in):: e                      !precision
-    !variables de sortie
-    real(kind=pr),dimension(:),allocatable:: x        !solution approch�e du systeme
-    !variables locales
-    real(kind=pr),dimension(:),allocatable:: r, p, z
-    real(kind=pr):: beta, alpha
-    integer:: k, n
+    !fonction pour la mÃ©thode de gradient Ã  pas optimal
 
-    !initialisation
+    function grad_pas_optimal(A,b,x0,kmax,e) result(x)
 
-    n=size(A)                                          !taille du systeme
-    allocate(x(n),r(n),p(n),z(n))
-    x=0._pr
-    beta=3._pr
-    r=MATMUL(A,x0)
-    r=b-r
-
-    do while (beta>e.and.k <= kmax)
-       z=MATMUL(A,p)
-       !alpha=
-
-    end do
-
-
-
-  end function gradient_conjugue
-
-
-
-    !fonction pour la méthode de gradient à pas optimal
-
-    function grad_pas_optimal(A,b,x0,kmax,e)result(x)
-
-      !déclaration des arguments
-      !précision
+      !dÃ©claration des arguments
+      !prÃ©cision
       real(kind=Pr), intent(in):: e
-      !test d'arrêt
+      !test d'arrÃªt
       integer, intent(in)::kmax
       real(kind=Pr), dimension(:,:), intent(in)::A
       real(kind=Pr),dimension(:), intent(in):: b, x0
-      real(kind=Pr), dimension(:),allocatable, intent(out)::x
+      real(kind=Pr), dimension(:),allocatable::x
       real(kind=Pr), dimension(:), allocatable :: r,z
-      real(kind=Pr) :: alpha
+      real(kind=Pr) :: alpha, beta
       integer :: k, n
 
       n=size(A)
-      Allocate(A(n))
-      Allocate(z(n))
-      Allocate(x(n))
+      allocate(z(n))
+      allocate(r(n))
+      allocate(x(n))
 
       r=b-matmul(A,x0)
+      beta=NORM2(r)
       k=0
 
-      do while (k<=kmax .and. )
+      do while (k<=kmax .and.beta>e )
          z=matmul(A,r)
-         alph a= dotproduct(r,r)/dotproduct(z,r)
+         alpha=DOT_PRODUCT(r,r)/DOT_PRODUCT(z,r)
          x=x+alpha*r
          r=r-alpha*z
          k=k+1
 
       end do
-      return x
 
       if (k>kmax) then
-         return "tolérance atteinte"
+         print*, "tolÃ©rance atteinte"
       end if
       end function
-
+      
+      
 !====================================================================================    
     !fonction pour la mÃ©thode du rÃ©sidu minimum
 
-    function res_min(A,b,x0,kmax,e) result(x)
+    function res_min(A,b,x0,kmax,e )result(x)
 
       !DÃ©claration des variables
       real(kind=Pr), intent(in):: e
@@ -100,31 +67,30 @@ contains
       integer, intent(in)::kmax
       real(kind=Pr), dimension(:,:), intent(in)::A
       real(kind=Pr),dimension(:), intent(in):: b, x0
-      real(kind=Pr), dimension(:),allocatable, intent(out)::x
+      real(kind=Pr), dimension(:),allocatable::x
       real(kind=Pr), dimension(:), allocatable :: r,z
       real(kind=Pr) :: alpha
       integer :: k, n
 
       n=size(A)
-      Allocate(A(n))
-      Allocate(z(n))
-      Allocate(x(n))
+      allocate(z(n))
+      allocate(r(n))
+      allocate(x(n))
 
       r=b-matmul(A,x0)
       k=0
 
       do while (k<=kmax .and. NORM2(r) > e)    !Fonction norme Ã  dÃ©finir
          z=matmul(A,r)
-         alpha= dotproduct(r,z)/dotproduct(z,z)
+         alpha=DOT_PRODUCT(r,z)/DOT_PRODUCT(z,z)
          x=x+alpha*r
          r=r-alpha*z
          k=k+1
 
       end do
-      return x
 
       if (k>kmax) then
-         return "tolÃ©rance atteinte", NORM2(r)
+         print*, "tolÃ©rance atteinte", NORM2(r)
       end if
   end function res_min
 
@@ -251,29 +217,29 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
  !====================================================================================
      !Fonction pour le calcul de la normeInf
      
-    function norme_inf (a) result(norme)
-        implicit none
+   ! function norme_inf (a) result(norme)
+        !implicit none
         ! --- arguments
-        type (element), dimension(:), intent(in) :: a
-        real :: norme
+        !type (element), dimension(:), intent(in) :: a
+        !real :: norme
         ! --- variables locales
-        integer :: i, taille
-        real, dimension (:) , allocatable :: y
+       ! integer :: i, taille
+        !real, dimension (:) , allocatable :: y
         ! --- calcul taille de la matrice pleine associee
-        taille=0
-            do i=1, size (a)
-                taille=max (taille, a(i)%indl, a (i)%indc )
-            end do
+        !taille=0
+            !do i=1, size (a)
+              !  taille=max (taille, a(i)%indl, a (i)%indc )
+           ! end do
         ! --- calcul de la norme
-        norme=0.
-        allocate (y(1:taille))
-        y=0.
-            do i=1, size (a)
-                y(a(i)%indl)=y (a(i)%indl)+abs (a(i)%coef)
-            end do
-        norme=maxval(y)
-        deallocate(y)
-    end function norme_inf
-
+       ! norme=0.
+       ! allocate (y(1:taille))
+       ! y=0.
+            !do i=1, size (a)
+               ! y(a(i)%indl)=y (a(i)%indl)+abs (a(i)%coef)
+          !  end do
+       ! norme=maxval(y)
+        !deallocate(y)
+   ! end function norme_inf
+    
 
 end module modalgo
