@@ -149,35 +149,38 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
   end function gradient_conjugue
 
   
-
-  subroutine Arnoldi(v,A,Hm,Vm)
+  subroutine Arnoldi(v,A,m,Hm,Vm)
 
     !variables d'entrees 
-    real(kind=pr),dimension(:,:),intent(in)::v
+    real(kind=pr),dimension(:),intent(in)::v
     real(kind=pr),dimension(:,:),intent(in):: A
-    !variable de sortie
+    !variables de sortie
     real(kind=pr),dimension(:,:),allocatable,intent(out):: Vm
     real(kind=pr),dimension(:,:),allocatable,intent(out):: Hm
     !variables locales
     integer:: m, n, i, j
+    real(kind=pr),dimension(:,:),allocatable:: vecteurv
     real(kind=pr),dimension(:),allocatable:: wj
-
+   
     !initialisation
-    n=size(v(:,1))
-    m=size(v(1,:))
+    n=size(A)
     allocate(Hm(m+1,m))
-    allocate(Vm(n,m))
+    allocate(Vm(n,m+1))
+    allocate(vecteurv(n,m))
     allocate(wj(n))
     Hm=0._pr
+    Vm=0._pr
+    vecteurv=0._pr
 
     !algorithme d'Arnoldi
 
-    Vm(:,1)=v(:,1)
+    Vm(1,1)=v(1)
     do j=1,m
-       wj=MATMUL(A,v(:,j))
+       vecteurv(j,j)=v(j)
+       wj=MATMUL(A,vecteurv(:,j))
        do i=1,j
-          Hm(i,j)=DOT_PRODUCT(wj,v(:,i))
-          wj=wj-Hm(i,j)*v(:,i)
+          Hm(i,j)=DOT_PRODUCT(wj,vecteurv(:,i))
+          wj=wj-Hm(i,j)*vecteurv(:,i)
        end do
        Hm(j+1,j)=NORM2(wj)
 
