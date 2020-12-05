@@ -46,6 +46,7 @@ contains
          alpha=DOT_PRODUCT(r,r)/DOT_PRODUCT(z,r)
          x=x+alpha*r
          r=r-alpha*z
+         beta=NORM2(r)
          k=k+1
 
       end do
