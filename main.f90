@@ -13,7 +13,13 @@ program main
 
   !variables
   real(kind=pr),dimension(:),allocatable:: x
-  
+  real(kind=pr),dimension(:,:),allocatable:: Bn, An, Tn
+  real(kind=pr),dimension(:),allocatable:: tab
+  real(kind=pr):: alpha 
+  integer:: i, j
+
+!==================================================================================================================================
+  !premiers tests
   !initialisation
   n=3
   allocate(A(n,n),b(n),x0(n),x(n))
@@ -39,8 +45,8 @@ program main
   x0(2)=1._pr
   x0(3)=1._pr
 
-  e=0.00000001
-  kmax=10000
+  e=0.0001
+  kmax=1000000000
   m=2
   
 
@@ -62,16 +68,85 @@ program main
   print*, "methode du gradient conjugue"
   x=gradient_conjugue(A,b,x0,kmax,e)
   print*, x
+  
+ ! print*, "methode FOM"
+ ! x=FOM(A,b,x0,kmax,e,m)
+ ! print*, x
 
+ ! print*, "methode GMRes"
+ ! x=GMRes(A,b,x0,kmax,e,m)
+ ! print*, x
+
+ 
+  
+  deallocate(A,b,x0,x)
+
+
+!====================================================================================================================================================
+  !tests sur An=In-alpha*tBn* Bn
+  n=100
+  allocate(An(n,n),Bn(n,n),Tn(n,n),x0(n),x(n),b(n),tab(n*n))
+
+  An=0._pr
+  Bn=0._pr
+  !remplissage de Bn
+  do i=1,n
+     do j=1,n
+        Bn(i,j)=rand(0)
+     end do
+  end do
+
+
+  !Tn=tBn Bn
+  Tn=MATMUL(transpose(Bn),Bn)
+  
+  !alpha=max(tBnBN)(i,j)
+  !remplissage de tab
+  do i=1,n
+     do j=1,n
+        tab(i+(j-1)*n)=Tn(i,j)
+     end do
+  end do
+
+  alpha=MAXVAL(tab)
+    
+  !remplissage de An à partir de Bn
+  do i=1,n
+     An(i,i)=1._pr
+  end do
+
+  An=alpha*Tn+An
+ 
+  b=1._pr
+  x0=0._pr
+ 
+  print*, "test des methodes pour An=In+alpha*tBn Bn "
+  print*, "A:", An
+  print*, "b:", b
+  print*, "x0:", x0
+  print*,"precision:", e
+  print*, "m:", m
+  print*, "methode du gradient a pas optimal"
+  x=grad_pas_optimal(An,b,x0,kmax,e)
+  print*, x
+
+  print*, "methode du residu minimum"
+  x=res_min(An,b,x0,kmax,e)
+  print*, x
+
+  print*, "methode du gradient conjugue"
+  x=gradient_conjugue(An,b,x0,kmax,e)
+  print*, x
+  
   print*, "methode FOM"
-  x=FOM(A,b,x0,kmax,e,m)
+  x=FOM(An,b,x0,kmax,e,m)
   print*, x
 
   print*, "methode GMRes"
-  x=GMRes(A,b,x0,kmax,e,m)
+  x=GMRes(An,b,x0,kmax,e,m)
   print*, x
   
-  
-  deallocate(A,b,x0,x)
-end program main
 
+  deallocate(An,Bn,Tn,x0,x,b)
+  
+end program main
