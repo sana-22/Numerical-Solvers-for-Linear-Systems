@@ -4,12 +4,12 @@ program main
 
   implicit none
 
-  !données d'entree du probléme 
-  real(kind=pr),dimension(:,:),allocatable:: A           !matrice du sytème lineaire
+  !donnÃ©es d'entree du problÃ©me 
+  real(kind=pr),dimension(:,:),allocatable:: A           !matrice du sytÃ¨me lineaire
   real(kind=pr),dimension(:),allocatable:: b             !vecteur second membre
   real(kind=pr),dimension(:),allocatable:: x0            !vecteur initial de depart
   real(kind=pr):: e                                      !precision voulue
-  integer:: kmax, m, n                                   !kmax test d'arret des methodes et m caractérisant espace de Krylov n dimension du syteme à resoudre
+  integer:: kmax, m, n                                   !kmax test d'arret des methodes et m caractÃ©risant espace de Krylov n dimension du syteme Ã  resoudre
 
   !variables
   real(kind=pr),dimension(:),allocatable:: x
@@ -17,15 +17,17 @@ program main
   !initialisation
   n=3
   allocate(A(n,n),b(n),x0(n),x(n))
-  A(1,1)=8._pr
-  A(2,2)=7._pr
-  A(3,3)=6._pr
+
+  A(1,1)=2._pr
+  A(2,2)=2._pr
+  A(3,3)=2._pr
+  
   A(1,2)=1._pr
   A(2,1)=1._pr
-  A(2,3)=2._pr
-  A(3,2)=2._pr
-  A(3,1)=3._pr
-  A(1,3)=3._pr
+  A(2,3)=1._pr
+  A(3,2)=1._pr
+  A(3,1)=1._pr
+  A(1,3)=1._pr
 
 
   b(1)=1._pr
@@ -33,11 +35,11 @@ program main
   b(3)=3._pr
 
 
-  x0(1)=6._pr
-  x0(2)=5._pr
-  x0(3)=4._pr
+  x0(1)=1._pr
+  x0(2)=1._pr
+  x0(3)=1._pr
 
-  e=0.001_pr
+  e=0.00000001
   kmax=10000
   m=2
   
@@ -72,3 +74,4 @@ program main
   
   deallocate(A,b,x0,x)
 end program main
+
