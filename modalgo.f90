@@ -1,6 +1,7 @@
+
 module modalgo
 
-  !contient touts les algorithmes necessaire a la resolution d'un systeme lineaire Ax=b
+  !contient touts les algorithmes necessaires a la resolution d'un systeme lineaire Ax=b
 
   implicit none
 
@@ -8,7 +9,7 @@ module modalgo
 
 contains
 
-!=================================================================================
+!=========================================================================================================================================
 
     !fonction pour la methode de gradient a  pas optimal
 
@@ -52,14 +53,16 @@ contains
 
       if (k>kmax) then
          print*, "tolerance non atteinte", NORM2(r)
+      else
+         print*, "convergence en :", k, "itérations"
       end if
 
-      deallocate(r,z,x)
+      deallocate(r,z)
       
     end function grad_pas_optimal
       
       
-!====================================================================================    
+!===================================================================================================================================    
     !fonction pour la methode du residu minimum
 
     function res_min(A,b,x0,kmax,e)result(x)
@@ -103,9 +106,11 @@ contains
 
       if (k>kmax) then
          print*, "tolerance non atteinte", NORM2(r)
+      else
+         print*, "convergence en :", k, "itérations"
       end if
 
-      deallocate(z,r,x)
+      deallocate(z,r)
   end function res_min
 
 
@@ -113,7 +118,7 @@ contains
 
 
 
-  !=======================================================================================================
+  !=====================================================================================================================================================
 
 !fonction pour la methode du gradient conjugue
   
@@ -160,15 +165,17 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
     if(k>kmax) then
        print*, "tolerance non atteinte:" ,  beta
+    else
+       print*, "convergence en :", k, "itérations"
     end if
     
-    deallocate(r,rplus,p,z,x)
+    deallocate(r,rplus,p,z)
 
     
   end function gradient_conjugue
 
 
-  !===================================================================================================================
+  !===================================================================================================================================================
 
 !algorithme d'Arnoldi: construction de Vm et Hm
   
@@ -221,24 +228,25 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
   end subroutine Arnoldi
 
 
-  !============================================================================================================
+  !===============================================================================================================================================
 
 !fonction qui contient la methode de resolution FOM
 
   
-  function FOM(A,b,x0,kmax,e) result(x)
+  function FOM(A,b,x0,kmax,e,m) result(x)
      !variables d'entree
     real(kind=pr),dimension(:,:),intent(in):: A       !matrice du systeme lineaire
     real(kind=pr),dimension(:),intent(in):: b, x0     !vecteur second membre et donnée intiale
     integer,intent(in):: kmax                         !test d'arret
     real(kind=pr),intent(in):: e                      !precision
+    integer,intent(in):: m
     !variables de sortie
     real(kind=pr),dimension(:),allocatable:: x        !solution approchée du systeme
     !variables locales
     real(kind=pr),dimension(:),allocatable:: r        !residu reel
     real(kind=pr),dimension(:),allocatable:: y
     real(kind=pr):: beta
-    integer:: k, m, n
+    integer:: k, n
     real(kind=pr),dimension(:,:),allocatable:: Hm, Vm
     
 
@@ -250,7 +258,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     r=b-MATMUL(A,x0)     !residu initial
     beta=NORM2(r)
     
-    m=2
     allocate(y(m))
     y=0._pr
     allocate(Hm(m+1,m))
@@ -278,24 +285,27 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
     if (k>kmax) then
        print*, 'tolerance non atteinte' , beta
+    else
+       print*, "convergence en :", k, "itérations"
     end if
 
-    deallocate(r,y,Hm,Vm,x)
+    deallocate(r,y,Hm,Vm)
     
   end function FOM
 
-!================================================================================================================
+!=============================================================================================================================================
 
 !fonction pour la methode GMRes
 
   
-  function GMRes(A,b,x0,kmax,e)  result(x)
+  function GMRes(A,b,x0,kmax,e,m)  result(x)
 
     !variables d'entree
     real(kind=pr),dimension(:,:),intent(in):: A       !matrice de résolution du probleme
     real(kind=pr),dimension(:),intent(in):: b, x0     !vecteur second membre et donnée intiale
     integer,intent(in):: kmax                         !test d'arret
     real(kind=pr),intent(in):: e                      !precision
+    integer,intent(in):: m
 
     !variables de sortie
     real(kind=pr),dimension(:),allocatable:: x        !solution approchée du systeme
@@ -303,7 +313,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     !variables locales
     real(kind=pr),dimension(:),allocatable:: r, y, betae1
     real(kind=pr):: beta
-    integer:: n,m,k
+    integer:: n,k
     real(kind=pr),dimension(:,:),allocatable:: Hm, Vm
     
     !initialisation
@@ -316,7 +326,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
     betae1=0._pr
     
-    m=2
     allocate(y(m))
     y=0._pr
     
@@ -345,11 +354,15 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
     if (k>kmax) then
        print*, 'tolerance non atteinte', beta
+    else
+       print*, "convergence en :", k, "itérations"
     end if
+
+    deallocate(r,betae1,y,Hm,Vm)
     
   end function GMRes
   
- !====================================================================================
+ !====================================================================================================================================
      !Fonction pour le calcul de la normeInf
      
    ! function norme_inf (a) result(norme)
