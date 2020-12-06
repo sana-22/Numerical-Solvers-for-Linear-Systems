@@ -47,7 +47,7 @@ program main
 
   e=0.0001
   kmax=1000000000
-  m=2
+  m=10
   
 
   !test des methodes
@@ -69,9 +69,9 @@ program main
   x=gradient_conjugue(A,b,x0,kmax,e)
   print*, x
   
- ! print*, "methode FOM"
- ! x=FOM(A,b,x0,kmax,e,m)
- ! print*, x
+  print*, "methode FOM"
+  x=FOM(A,b,x0,kmax,e,m)
+  print*, x
 
  ! print*, "methode GMRes"
  ! x=GMRes(A,b,x0,kmax,e,m)
@@ -84,7 +84,7 @@ program main
 
 !====================================================================================================================================================
   !tests sur An=In-alpha*tBn* Bn
-  n=100
+  n=3
   allocate(An(n,n),Bn(n,n),Tn(n,n),x0(n),x(n),b(n),tab(n*n))
 
   An=0._pr
@@ -119,11 +119,12 @@ program main
  
   b=1._pr
   x0=0._pr
- 
+
+  print*, "'''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
   print*, "test des methodes pour An=In+alpha*tBn Bn "
-  print*, "A:", An
-  print*, "b:", b
-  print*, "x0:", x0
+ !print*, "A:", An
+ ! print*, "b:", b
+ !print*, "x0:", x0
   print*,"precision:", e
   print*, "m:", m
   print*, "methode du gradient a pas optimal"
@@ -142,9 +143,9 @@ program main
   x=FOM(An,b,x0,kmax,e,m)
   print*, x
 
-  print*, "methode GMRes"
-  x=GMRes(An,b,x0,kmax,e,m)
-  print*, x
+ ! print*, "methode GMRes"
+ ! x=GMRes(An,b,x0,kmax,e,m)
+ ! print*, x
   
 
   deallocate(An,Bn,Tn,x0,x,b)
