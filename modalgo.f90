@@ -1,4 +1,4 @@
- module modalgo
+module modalgo
 
   !contient touts les algorithmes necessaires a la resolution d'un systeme lineaire Ax=b
 
@@ -28,7 +28,7 @@ contains
       integer :: k, n
 
       !initialisation
-      n=size(A)
+      n=size(A(:,1))
       allocate(z(n))
       allocate(r(n))
       allocate(x(n))
@@ -82,7 +82,7 @@ contains
 
 
       !initialisation
-      n=size(A)
+      n=size(A(:,1))
       allocate(z(n),r(n),x(n))
       x=x0
       r=b-matmul(A,x0)
@@ -131,13 +131,14 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     !variables de sortie
     real(kind=pr),dimension(:),allocatable:: x        !solution approchée du systeme 
     !variables locales
-    real(kind=pr),dimension(:),allocatable:: r, rplus,  p, z
+    real(kind=pr),dimension(:),allocatable:: r, rplus, p, z
     real(kind=pr):: beta, alpha, gamma, w
     integer:: k, n
 
     !initialisation
   
-    n=size(A)                                          !taille du systeme
+    n=size(A(:,1))
+    !taille du systeme
     allocate(x(n),r(n),p(n),z(n),rplus(n))
     x=x0
     r=b-MATMUL(A,x0)
@@ -178,12 +179,12 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
 !algorithme d'Arnoldi: construction de Vm et Hm
   
-   subroutine Arnoldi(v,A,m,Hm,Vm)
+  subroutine Arnoldi(r,A,m,Hm,Vm)
 
     !variables d'entrees
     real(kind=pr),dimension(:,:),intent(in):: A
-    real(kind=pr),dimension(:),intent(in)::v                !vecteur qui definit l'espace de Krylov {v,Av,.....,A(m-1)v}
-    integer,intent(in):: m
+    real(kind=pr),dimension(:),intent(in)::r                !vecteur qui definit l'espace de Krylov {v,Av,.....,A(m-1)v}
+    integer,intent(in)::m
    
     !variables de sortie
     real(kind=pr),dimension(:,:),allocatable,intent(out):: Vm     !matrice qui contient les vecteurs de la nouvelle base orthonormale
@@ -191,22 +192,22 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
     !variables locales
     integer:: n, i, j
-    real(kind=pr),dimension(:,:),allocatable:: vecteurv
-    real(kind=pr),dimension(:),allocatable:: wj
+    real(kind=pr),dimension(:),allocatable:: wj, vj
    
     !initialisation
-    n=size(A)
+    n=size(A(:,1))
     allocate(Hm(m+1,m))
     allocate(Vm(n,m+1))
-    allocate(wj(n))
+    allocate(wj(n),vj(n))
     Hm=0._pr
     Vm=0._pr
 
     !algorithme d'Arnoldi
 
-    Vm(1:n,1)=v/NORM2(v)
+    Vm(:,1)=1._pr/NORM2(r)*r
     do j=1,m
-       wj=MATMUL(A,Vm(1:n,j))   
+       vj=Vm(1:n,j)
+       wj=MATMUL(A,vj)   
        do i=1,j
           Hm(i,j)=DOT_PRODUCT(wj,Vm(1:n,i))
           wj=wj-Hm(i,j)*Vm(1:n,i)
@@ -219,10 +220,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        Vm(1:n,j+1)=1._pr/Hm(j+1,j)*wj
        
     end do
-
-  
-
-    !deallocate(Vm,Hm,wj)
+    deallocate(wj)
     
   end subroutine Arnoldi
 
@@ -238,7 +236,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     real(kind=pr),dimension(:),intent(in):: b, x0     !vecteur second membre et donnée intiale
     integer,intent(in):: kmax                         !test d'arret
     real(kind=pr),intent(in):: e                      !precision
-    integer,intent(in):: m
+    integer,intent(in):: m                            
     !variables de sortie
     real(kind=pr),dimension(:),allocatable:: x        !solution approchée du systeme
     !variables locales
@@ -250,10 +248,9 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
 
     !initialisation
-    n=size(A)
+    n=size(A(:,1))
     allocate(r(n),x(n))
     x=x0
-    y=0._pr
     r=b-MATMUL(A,x0)     !residu initial
     beta=NORM2(r)
     
@@ -265,7 +262,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     Vm=0._pr
     
     k=0
-
 
     !algorithme de la methode
     
@@ -279,8 +275,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        beta=NORM2(r)
        k=k+1    
     end do
-
-
     
     if (k>kmax) then
        print*, 'tolerance non atteinte' , beta
@@ -316,7 +310,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     real(kind=pr),dimension(:,:),allocatable:: Hm, Vm
     
     !initialisation
-    n=size(A)
+    n=size(A(:,1))
     
     allocate(x(n),r(n),betae1(n))
     x=x0
@@ -390,6 +384,3 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
 
 end module modalgo
-
-
-
