@@ -151,7 +151,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        z=MATMUL(A,p)
        w=DOT_PRODUCT(r,r)
        alpha=w/DOT_PRODUCT(z,p)
-       x=x-alpha*p
+       x=x+alpha*p
        rplus=r-alpha*z
        gamma=DOT_PRODUCT(rplus,rplus)/w
        p=rplus+gamma*p
