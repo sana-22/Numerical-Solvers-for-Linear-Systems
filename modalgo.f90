@@ -178,7 +178,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
 !algorithme d'Arnoldi: construction de Vm et Hm
   
-  subroutine Arnoldi(v,A,m,Hm,Vm)
+   subroutine Arnoldi(v,A,m,Hm,Vm)
 
     !variables d'entrees
     real(kind=pr),dimension(:,:),intent(in):: A
@@ -197,32 +197,31 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     n=size(A)
     allocate(Hm(m+1,m))
     allocate(Vm(n,m+1))
-    allocate(vecteurv(n,m))
     allocate(wj(n))
     Hm=0._pr
     Vm=0._pr
-    vecteurv=0._pr
 
     !algorithme d'Arnoldi
 
-    Vm(1,1)=v(1)
+    Vm(1:n,1)=v/NORM2(v)
     do j=1,m
-       vecteurv(j,j)=v(j)
-       wj=MATMUL(A,vecteurv(:,j))
+       wj=MATMUL(A,Vm(1:n,j))   
        do i=1,j
-          Hm(i,j)=DOT_PRODUCT(wj,vecteurv(:,i))
-          wj=wj-Hm(i,j)*vecteurv(:,i)
+          Hm(i,j)=DOT_PRODUCT(wj,Vm(1:n,i))
+          wj=wj-Hm(i,j)*Vm(1:n,i)
        end do
        Hm(j+1,j)=NORM2(wj)
 
        if( Hm(j+1,j)==0) then
           stop
        end if
-       Vm(:,j+1)=1._pr/Hm(j+1,j)*wj
+       Vm(1:n,j+1)=1._pr/Hm(j+1,j)*wj
        
     end do
 
-    deallocate(Vm,Hm,vecteurv,wj)
+  
+
+    !deallocate(Vm,Hm,wj)
     
   end subroutine Arnoldi
 
