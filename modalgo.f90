@@ -183,13 +183,14 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     !variables d'entrees
     real(kind=pr),dimension(:,:),intent(in):: A
     real(kind=pr),dimension(:),intent(in)::v                !vecteur qui definit l'espace de Krylov {v,Av,.....,A(m-1)v}
+    integer,intent(in):: m
    
     !variables de sortie
     real(kind=pr),dimension(:,:),allocatable,intent(out):: Vm     !matrice qui contient les vecteurs de la nouvelle base orthonormale
     real(kind=pr),dimension(:,:),allocatable,intent(out):: Hm     !matrice de Hessenberg qui contient les coefficients de la methode de Gram-Schmidt
     
     !variables locales
-    integer:: m, n, i, j
+    integer:: n, i, j
     real(kind=pr),dimension(:,:),allocatable:: vecteurv
     real(kind=pr),dimension(:),allocatable:: wj
    
