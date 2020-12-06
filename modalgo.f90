@@ -1,5 +1,4 @@
-
-module modalgo
+ module modalgo
 
   !contient touts les algorithmes necessaires a la resolution d'un systeme lineaire Ax=b
 
@@ -54,7 +53,7 @@ contains
       if (k>kmax) then
          print*, "tolerance non atteinte", NORM2(r)
       else
-         print*, "convergence en :", k, "itérations"
+         print*, "convergence en :", k, "iterations"
       end if
 
       deallocate(r,z)
@@ -107,7 +106,7 @@ contains
       if (k>kmax) then
          print*, "tolerance non atteinte", NORM2(r)
       else
-         print*, "convergence en :", k, "itérations"
+         print*, "convergence en :", k, "iterations"
       end if
 
       deallocate(z,r)
@@ -156,8 +155,8 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        rplus=r-alpha*z
        gamma=DOT_PRODUCT(rplus,rplus)/w
        p=rplus+gamma*p
-       beta=NORM2(r)
        r=rplus
+       beta=NORM2(r)
        k=k+1
     end do
 
@@ -166,7 +165,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     if(k>kmax) then
        print*, "tolerance non atteinte:" ,  beta
     else
-       print*, "convergence en :", k, "itérations"
+       print*, "convergence en :", k, "iterations"
     end if
     
     deallocate(r,rplus,p,z)
@@ -286,7 +285,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     if (k>kmax) then
        print*, 'tolerance non atteinte' , beta
     else
-       print*, "convergence en :", k, "itérations"
+       print*, "convergence en :", k, "iterations"
     end if
 
     deallocate(r,y,Hm,Vm)
@@ -355,7 +354,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     if (k>kmax) then
        print*, 'tolerance non atteinte', beta
     else
-       print*, "convergence en :", k, "itérations"
+       print*, "convergence en :", k, "iterations"
     end if
 
     deallocate(r,betae1,y,Hm,Vm)
@@ -391,3 +390,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
 
 end module modalgo
+
+
+
