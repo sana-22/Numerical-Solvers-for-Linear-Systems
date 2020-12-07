@@ -236,15 +236,17 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     real(kind=pr),dimension(:),intent(in):: b, x0     !vecteur second membre et donnée intiale
     integer,intent(in):: kmax                         !test d'arret
     real(kind=pr),intent(in):: e                      !precision
-    integer,intent(in):: m                            
+    integer,intent(in):: m                            !caracterise espace de krylov dans lequel on se place
     !variables de sortie
     real(kind=pr),dimension(:),allocatable:: x        !solution approchée du systeme
     !variables locales
     real(kind=pr),dimension(:),allocatable:: r        !residu reel
-    real(kind=pr),dimension(:),allocatable:: y
-    real(kind=pr):: beta
-    integer:: k, n
-    real(kind=pr),dimension(:,:),allocatable:: Hm, Vm
+    real(kind=pr),dimension(:),allocatable:: y, u, betae1
+    real(kind=pr):: beta, somme
+    integer:: k, n, i, p
+    real(kind=pr),dimension(:,:),allocatable:: Hm, Vm    !matrice de Hessenberg et matrice de la nouvelle base orthogonal extrait de A à partir du résidu
+    real(kind=pr),dimension(:,:),allocatable:: Qm, Rm    ! matrice de decomposition QR de Hmbarre
+          
     
 
     !initialisation
@@ -256,20 +258,57 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
     allocate(y(m))
     y=0._pr
+    
     allocate(Hm(m+1,m))
     allocate(Vm(n,m+1))
     Hm=0._pr
     Vm=0._pr
+
     
+    allocate(Qm(m,m),Rm(m,m))
+    Qm=0._pr
+    Rm=0._pr
+    allocate(u(m),betae1(m))
+    u=0._pr
+    betae1=0._pr
+    betae1(1)=beta
+
     k=0
 
+    call Arnoldi(r,A,m,Hm,Vm)
+    call QR(Hm(1:m,1:m),Qm,Rm)
+    print*, Qm(:,1)
+    print*, Qm(:,2)
+    print*, Qm(:,3)
+    
     !algorithme de la methode
     
     do while (beta>e.and.k<= kmax)
-       !obtention de Hm et Vm en partant de r
+       
+       !obtention de Hm et Vm par la methode d'Arnoldi en partant de r et A
        call Arnoldi(r,A,m,Hm,Vm)
-       !résolution de Hmy=betae1
-       y(1)=beta/Hm(1,1)
+       
+       !resolution de Hmbarre*y=beta*e1
+       
+       !obtention de la decomposition QR de Hmbarre pour pouvoir réaliser la résolution
+       call QR(Hm(1:m,1:m),Qm,Rm)
+
+       !resolution de Qm*u=betae1
+       !Q appartient au groupe orthogonal donc TQmQm=I donc u=TQm*betae1
+       u=MATMUL(transpose(Qm),betae1)
+       
+       !resolution de Rm*y=u
+       !Rm est triangulaire superieure a diagonale non nulle
+       !methode de remontee
+       y(m)=1._pr/Rm(m,m)*u(m)
+       do i=m-1,1,-1
+          somme=0._pr
+          do p=0,i-1
+             somme=somme+Rm(i,m-p)*y(m-p)
+          end do
+          y(i)=1._pr/Rm(i,i)*(u(i)-somme)
+       end do
+       
        x=x+MATMUL(Vm(1:n,1:m),y)
        r=-Hm(m+1,m)*y(m)*Vm(1:n,m+1)
        beta=NORM2(r)
@@ -282,7 +321,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        print*, "convergence en :", k, "iterations"
     end if
 
-    deallocate(r,y,Hm,Vm)
+    deallocate(r,y,Hm,Vm,Qm,Rm,u,betae1)
     
   end function FOM
 
@@ -354,8 +393,62 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     deallocate(r,betae1,y,Hm,Vm)
     
   end function GMRes
+
+  !===========================================================================================================================================
+
+  !fonction qui contient la decomposition polaire matrice A de taille m*m dans le cas particulier d'une matrice de Hessenberg A=Hmbarre
+  !methode de Givens
+
+  subroutine QR(A,Q,R)
+
+    !variables d'entree de sortie
+    real(kind=pr),dimension(:,:),intent(in):: A
+    real(kind=pr),dimension(:,:),intent(out):: Q
+    real(kind=pr),dimension(:,:),intent(out):: R
+    !variables internes
+    integer:: m, i, j
+    integer(kind=pr),dimension(:,:),allocatable:: P
+    integer(kind=pr),dimension(:,:),allocatable:: TQ
+    real(kind=pr):: c, s
+
+
+    !initialisation
+    m=size(A(1,:))
+
+    allocate(P(m,m),TQ(m,m))
+    TQ=0._pr
+    P=0._pr
+
+    c=0._pr
+    s=0._pr
+
+    do j=1,m
+       P=0._pr
+       P(j,j)=1._pr
+       do i=1,m
+          if (i<=j) then
+             !définition des coefficients de la rotation
+             c=A(i,i)/sqrt(A(i,i)**2+A(i,j)**2)
+             s=-A(j,i)/sqrt(A(i,i)**2+A(i,j)**2)
+             !remplissage de la matrice de rotation i, j qui annule le terme A(i,j)
+             P(i,i)=c
+             P(i,j)=-s
+             P(j,i)=s
+             P(j,j)=c
+             TQ=MATMUL(P,TQ)
+          end if
+          
+       end do
+
+       Q=transpose(TQ)
+       R=MATMUL(TQ,A)
+    end do
+    
+    deallocate(P,TQ)
+    
+  end subroutine QR
   
- !====================================================================================================================================
+!===========================================================================================================================================
      !Fonction pour le calcul de la normeInf
      
    ! function norme_inf (a) result(norme)
