@@ -449,6 +449,40 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
   end subroutine QR
   
 !===========================================================================================================================================
+
+  !Fonction qui calcule l'argmin pour le GMRES
+  
+  function argmin(R,b) result(y)               !Avec QR = A, la décomp. QR de A et b = matmul(Q,betae1) 
+    real(PR),dimension(:,:),intent(in)::R
+    real(PR),dimension(:),intent(in)::b
+    real(PR),dimension(size(R,2))::y
+    integer:: i,j,n
+    real(PR)::S
+
+    n=size(R,2)
+    if (abs(R(n,n))>0.000000000000001_pr) then
+       y(n)=b(n)/R(n,n)
+    end if
+    if (abs(R(n,n))<=0.000000000000001_pr) then
+       y(n) = 1._pr
+    end if
+    do i = n-1,1,-1
+       S = 0._pr
+       do j = n,i+1,-1
+          S = S+R(i,j)*y(j)
+       end do
+       if (abs(R(i,i))>0.0000000000000001_pr) then
+          y(i) = (b(i)-S)/R(i,i)
+       end if
+       if (abs(R(i,i))<=0.0000000000000001_pr) then
+          y(i) = 1._pr
+       end if
+    end do
+    
+
+  end function argmin
+  
+!================================================================================================================================  
      !Fonction pour le calcul de la normeInf
      
    ! function norme_inf (a) result(norme)
