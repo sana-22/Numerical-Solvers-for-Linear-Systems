@@ -17,6 +17,12 @@ program main
   real(kind=pr),dimension(:),allocatable:: tab
   real(kind=pr):: alpha 
   integer:: i, j
+  
+  ! Fichiers solutions
+  
+  open(unit=11,file="solution_GPO.txt")
+  open(unit=12,file="solution_ResMin.txt")
+
 
 !==================================================================================================================================
   !premiers tests
