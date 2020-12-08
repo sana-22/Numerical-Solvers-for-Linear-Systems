@@ -184,11 +184,11 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     !variables d'entrees
     real(kind=pr),dimension(:,:),intent(in):: A
     real(kind=pr),dimension(:),intent(in)::r                !vecteur qui definit l'espace de Krylov {v,Av,.....,A(m-1)v}
-    integer,intent(in)::m
+    integer,intent(in):: m
    
     !variables de sortie
-    real(kind=pr),dimension(:,:),allocatable,intent(out):: Vm     !matrice qui contient les vecteurs de la nouvelle base orthonormale
-    real(kind=pr),dimension(:,:),allocatable,intent(out):: Hm     !matrice de Hessenberg qui contient les coefficients de la methode de Gram-Schmidt
+    real(kind=pr),dimension(:,:),intent(inout):: Vm     !matrice qui contient les vecteurs de la nouvelle base orthonormale
+    real(kind=pr),dimension(:,:),intent(inout):: Hm     !matrice de Hessenberg qui contient les coefficients de la methode de Gram-Schmidt
     
     !variables locales
     integer:: n, i, j
@@ -196,8 +196,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
    
     !initialisation
     n=size(A(:,1))
-    allocate(Hm(m+1,m))
-    allocate(Vm(n,m+1))
+    
     allocate(wj(n),vj(n))
     Hm=0._pr
     Vm=0._pr
@@ -275,11 +274,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
     k=0
 
-    call Arnoldi(r,A,m,Hm,Vm)
-    call QR(Hm(1:m,1:m),Qm,Rm)
-    print*, Qm(:,1)
-    print*, Qm(:,2)
-    print*, Qm(:,3)
     
     !algorithme de la methode
     
@@ -300,6 +294,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        !resolution de Rm*y=u
        !Rm est triangulaire superieure a diagonale non nulle
        !methode de remontee
+       
        y(m)=1._pr/Rm(m,m)*u(m)
        do i=m-1,1,-1
           somme=0._pr
@@ -308,7 +303,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
           end do
           y(i)=1._pr/Rm(i,i)*(u(i)-somme)
        end do
-       
+
        x=x+MATMUL(Vm(1:n,1:m),y)
        r=-Hm(m+1,m)*y(m)*Vm(1:n,m+1)
        beta=NORM2(r)
@@ -375,6 +370,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        !calcul de y=argmin(beta e1 - Hmy)
 
        x=x+MATMUL(Vm(1:n,1:m),y)
+       
        !definition de betae1
        betae1(1)=beta
        r=betae1-MATMUL(Hm(1:m,1:m),y)
@@ -403,8 +399,8 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
     !variables d'entree de sortie
     real(kind=pr),dimension(:,:),intent(in):: A
-    real(kind=pr),dimension(:,:),intent(out):: Q
-    real(kind=pr),dimension(:,:),intent(out):: R
+    real(kind=pr),dimension(:,:),intent(inout):: Q
+    real(kind=pr),dimension(:,:),intent(inout):: R
     !variables internes
     integer:: m, i, j, k
     real(kind=pr),dimension(:,:),allocatable:: P
@@ -417,7 +413,12 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
     allocate(P(m,m),TQ(m,m))
     TQ=0._pr
+    do i=1,m
+       TQ(i,i)=1._pr
+    end do
+    
     P=0._pr
+    R=0._pr
 
     c=0._pr
     s=0._pr
@@ -434,20 +435,16 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        end do
        
        !remplisassage des matrices de rotation
-       c=A(k+1,k+1)/sqrt(A(k+1,k+1)**2+A(k+1,k)**2)
-       s=-A(k,k+1)/sqrt(A(k+1,k+1)**2+A(k,k+1))
-      
+       c=A(k,k)/sqrt(A(k,k)**2+A(k+1,k)**2)
+       s=A(k+1,k)/sqrt(A(k,k)**2+A(k+1,k)**2)
+       
        P(k+1,k+1)=c
        P(k,k)=c
-       P(k+1,k)=s
-       P(k,k+1)=-s
+       P(k+1,k)=-s
+       P(k,k+1)=s
 
-    
-       if (k==1) then
-          TQ=P
-       else
-          TQ=MATMUL(P,TQ)
-       end if
+       TQ=MATMUL(P,TQ)
+
     end do
 
     
@@ -456,65 +453,20 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
     !obtention de R
     R=MATMUL(TQ,A)
-    
-    print*, "R:"
-    print*, R(1,:)
-    print*, R(2,:)
-    print*, R(3,:)
-   
 
-    print*, "TQQ", MATMUL(TQ,Q)
-    print*, "QR", MATMUL(Q,R)
-    print*, "A:", A
-
-    
-    
     deallocate(P,TQ)
-    
+
   end subroutine QR
-!===========================================================================================================================================
 
-  !Fonction qui calcule l'argmin pour le GMRES
-  
-  function argmin(R,b) result(y)               !Avec QR = A, la décomp. QR de A et b = matmul(Q,betae1) 
-    real(PR),dimension(:,:),intent(in)::R
-    real(PR),dimension(:),intent(in)::b
-    real(PR),dimension(size(R,2))::y
-    integer:: i,j,n
-    real(PR)::S
+  !===========================================================================================================================================
+  !Fonction pour le calcul de la normeInf
 
-    n=size(R,2)
-    if (abs(R(n,n))>0.000000000000001_pr) then
-       y(n)=b(n)/R(n,n)
-    end if
-    if (abs(R(n,n))<=0.000000000000001_pr) then
-       y(n) = 1._pr
-    end if
-    do i = n-1,1,-1
-       S = 0._pr
-       do j = n,i+1,-1
-          S = S+R(i,j)*y(j)
-       end do
-       if (abs(R(i,i))>0.0000000000000001_pr) then
-          y(i) = (b(i)-S)/R(i,i)
-       end if
-       if (abs(R(i,i))<=0.0000000000000001_pr) then
-          y(i) = 1._pr
-       end if
-    end do
-    
-
-  end function argmin
-  
-!================================================================================================================================  
-     !Fonction pour le calcul de la normeInf
-     
-   ! function norme_inf (a) result(norme)
-        !implicit none
-        ! --- arguments
-        !type (element), dimension(:), intent(in) :: a
-        !real :: norme
-        ! --- variables locales
+  ! function norme_inf (a) result(norme)
+  !implicit none
+  ! --- arguments
+  !type (element), dimension(:), intent(in) :: a
+  !real :: norme
+  ! --- variables locales
        ! integer :: i, taille
         !real, dimension (:) , allocatable :: y
         ! --- calcul taille de la matrice pleine associee
