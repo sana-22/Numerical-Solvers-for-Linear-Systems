@@ -406,9 +406,9 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     real(kind=pr),dimension(:,:),intent(out):: Q
     real(kind=pr),dimension(:,:),intent(out):: R
     !variables internes
-    integer:: m, i, j
-    integer(kind=pr),dimension(:,:),allocatable:: P
-    integer(kind=pr),dimension(:,:),allocatable:: TQ
+    integer:: m, i, j, k
+    real(kind=pr),dimension(:,:),allocatable:: P
+    real(kind=pr),dimension(:,:),allocatable:: TQ
     real(kind=pr):: c, s
 
 
@@ -422,32 +422,56 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     c=0._pr
     s=0._pr
 
-    do j=1,m
-       P=0._pr
-       do i=1,m
-       P(i,i)=1._pr
-          if (i<=j) then
-             !définition des coefficients de la rotation
-             c=A(i,i)/sqrt(A(i,i)**2+A(i,j)**2)
-             s=-A(j,i)/sqrt(A(i,i)**2+A(i,j)**2)
-             !remplissage de la matrice de rotation i, j qui annule le terme A(i,j)
-             P(i,i)=c
-             P(i,j)=-s
-             P(j,i)=s
-             P(j,j)=c
-             TQ=MATMUL(P,TQ)
-          end if
-          
-       end do
+    !m-1 rotations 
+    do k=1,m-1
 
-       Q=transpose(TQ)
-       R=MATMUL(TQ,A)
+       !remise à 0 de P
+       P=0._pr
+
+       !initialisation de la diagonale de 1
+       do i=1, m
+          P(i,i)=1._pr
+       end do
+       
+       !remplisassage des matrices de rotation
+       c=A(k+1,k+1)/sqrt(A(k+1,k+1)**2+A(k+1,k)**2)
+       s=-A(k,k+1)/sqrt(A(k+1,k+1)**2+A(k,k+1))
+      
+       P(k+1,k+1)=c
+       P(k,k)=c
+       P(k+1,k)=s
+       P(k,k+1)=-s
+
+    
+       if (k==1) then
+          TQ=P
+       else
+          TQ=MATMUL(P,TQ)
+       end if
     end do
+
+    
+    !obtention de Q
+    Q=transpose(TQ)
+
+    !obtention de R
+    R=MATMUL(TQ,A)
+    
+    print*, "R:"
+    print*, R(1,:)
+    print*, R(2,:)
+    print*, R(3,:)
+   
+
+    print*, "TQQ", MATMUL(TQ,Q)
+    print*, "QR", MATMUL(Q,R)
+    print*, "A:", A
+
+    
     
     deallocate(P,TQ)
     
   end subroutine QR
-  
 !===========================================================================================================================================
 
   !Fonction qui calcule l'argmin pour le GMRES
