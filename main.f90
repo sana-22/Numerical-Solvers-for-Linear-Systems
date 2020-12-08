@@ -17,16 +17,14 @@ program main
   real(kind=pr),dimension(:),allocatable:: tab
   real(kind=pr):: alpha 
   integer:: i, j
-  
-  ! Fichiers solutions
-  
-  open(unit=11,file="solution_GPO.txt")
-  open(unit=12,file="solution_ResMin.txt")
-
 
 !==================================================================================================================================
   !premiers tests
   !initialisation
+
+  e=0.0001
+  kmax=1000000000
+  m=2
   n=3
   allocate(A(n,n),b(n),x0(n),x(n))
 
@@ -50,12 +48,6 @@ program main
   x0(1)=1._pr
   x0(2)=1._pr
   x0(3)=1._pr
-
-  e=0.0001
-  kmax=1000000000
-  m=10
-  
-
   !test des methodes
   print*, "test des methodes de resolution Ax=b  pour une matrice simple"
   print*, "A:", A
@@ -79,18 +71,26 @@ program main
   x=FOM(A,b,x0,kmax,e,m)
   print*, x
 
- ! print*, "methode GMRes"
+  print*, "methode GMRes"
  ! x=GMRes(A,b,x0,kmax,e,m)
- ! print*, x
-
- 
+ ! print*, x 
   
   deallocate(A,b,x0,x)
 
 
 !====================================================================================================================================================
   !tests sur An=In-alpha*tBn* Bn
-  n=3
+
+  print*, "saisir n la taille du systeme:"
+  read*, n
+  print*, "saisir m:"
+  read*, m
+
+  
+  e=0.0001
+  kmax=1000000000
+
+
   allocate(An(n,n),Bn(n,n),Tn(n,n),x0(n),x(n),b(n),tab(n*n))
 
   An=0._pr
@@ -126,11 +126,8 @@ program main
   b=1._pr
   x0=0._pr
 
-  print*, "'''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
+  print*, "'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
   print*, "test des methodes pour An=In+alpha*tBn Bn "
- !print*, "A:", An
- ! print*, "b:", b
- !print*, "x0:", x0
   print*,"precision:", e
   print*, "m:", m
   print*, "methode du gradient a pas optimal"
@@ -149,7 +146,7 @@ program main
   x=FOM(An,b,x0,kmax,e,m)
   print*, x
 
- ! print*, "methode GMRes"
+  print*, "methode GMRes"
  ! x=GMRes(An,b,x0,kmax,e,m)
  ! print*, x
   
