@@ -424,8 +424,8 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
     do j=1,m
        P=0._pr
-       P(j,j)=1._pr
        do i=1,m
+       P(i,i)=1._pr
           if (i<=j) then
              !définition des coefficients de la rotation
              c=A(i,i)/sqrt(A(i,i)**2+A(i,j)**2)
