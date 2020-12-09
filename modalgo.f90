@@ -179,23 +179,23 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
 !algorithme d'Arnoldi: construction de Vm et Hm
   
-  subroutine Arnoldi(r,A,m,Hm,Vm)
+  subroutine Arnoldi(r,A,Hm,Vm)
 
     !variables d'entrees
     real(kind=pr),dimension(:,:),intent(in):: A
     real(kind=pr),dimension(:),intent(in)::r                !vecteur qui definit l'espace de Krylov {v,Av,.....,A(m-1)v}
-    integer,intent(in):: m
    
     !variables de sortie
     real(kind=pr),dimension(:,:),intent(inout):: Vm     !matrice qui contient les vecteurs de la nouvelle base orthonormale
     real(kind=pr),dimension(:,:),intent(inout):: Hm     !matrice de Hessenberg qui contient les coefficients de la methode de Gram-Schmidt
     
     !variables locales
-    integer:: n, i, j
+    integer:: n, m, i, j
     real(kind=pr),dimension(:),allocatable:: wj, vj
    
     !initialisation
     n=size(A(:,1))
+    m=size(Hm(1,:))
     
     allocate(wj(n),vj(n))
     Hm=0._pr
@@ -219,7 +219,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        Vm(1:n,j+1)=1._pr/Hm(j+1,j)*wj
        
     end do
-    deallocate(wj)
+    deallocate(wj,vj)
     
   end subroutine Arnoldi
 
@@ -245,6 +245,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     integer:: k, n, i, p
     real(kind=pr),dimension(:,:),allocatable:: Hm, Vm    !matrice de Hessenberg et matrice de la nouvelle base orthogonal extrait de A à partir du résidu
     real(kind=pr),dimension(:,:),allocatable:: Qm, Rm    ! matrice de decomposition QR de Hmbarre
+
           
     
 
@@ -273,15 +274,18 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     betae1(1)=beta
 
     k=0
-
     
     !algorithme de la methode
     
     do while (beta>e.and.k<= kmax)
        
        !obtention de Hm et Vm par la methode d'Arnoldi en partant de r et A
-       call Arnoldi(r,A,m,Hm,Vm)
-       
+    call Arnoldi(r,A,Hm,Vm)
+    
+   ! print*, "tVmAVm:", MATMUL(transpose(Vm(1:n,1:m)),MATMUL(A,Vm(1:n,1:m)))
+    !print*, "Hmbarre:", Hm(1:m,1:m)
+   ! print*, "AVm:", MATMUL(A,Vm(1:n,1:m))
+      ! print*, "Vm+1Hm:", MATMUL(Vm,Hm)
        !resolution de Hmbarre*y=beta*e1
        
        !obtention de la decomposition QR de Hmbarre pour pouvoir réaliser la résolution
@@ -290,6 +294,8 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        !resolution de Qm*u=betae1
        !Q appartient au groupe orthogonal donc TQmQm=I donc u=TQm*betae1
        u=MATMUL(transpose(Qm),betae1)
+       !u=MATMUL(transpose(Qm),MATMUL(transpose(Vm(1:n,1:m)),r))
+      
        
        !resolution de Rm*y=u
        !Rm est triangulaire superieure a diagonale non nulle
@@ -298,17 +304,18 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        y(m)=1._pr/Rm(m,m)*u(m)
        do i=m-1,1,-1
           somme=0._pr
-          do p=0,i-1
-             somme=somme+Rm(i,m-p)*y(m-p)
+          do p=i+1,m
+             somme=somme+Rm(i,p)*y(p)
           end do
           y(i)=1._pr/Rm(i,i)*(u(i)-somme)
        end do
-
+        
        x=x+MATMUL(Vm(1:n,1:m),y)
        r=-Hm(m+1,m)*y(m)*Vm(1:n,m+1)
+       ! r=r-MATMUL(A,MATMUL(Vm(1:n,1:m),y))
        beta=NORM2(r)
        k=k+1    
-    end do
+   end do
     
     if (k>kmax) then
        print*, 'tolerance non atteinte' , beta
@@ -366,7 +373,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     !algorithme de la  methode
 
     do while (beta>e.and.k<= kmax)
-       call Arnoldi(r,A,m,Hm,Vm)
+       call Arnoldi(r,A,Hm,Vm)
        !calcul de y=argmin(beta e1 - Hmy)
 
        x=x+MATMUL(Vm(1:n,1:m),y)
