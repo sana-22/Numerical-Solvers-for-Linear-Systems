@@ -15,7 +15,7 @@ program main
   real(kind=pr),dimension(:),allocatable:: x
   real(kind=pr),dimension(:,:),allocatable:: Bn, An, Tn
   real(kind=pr),dimension(:),allocatable:: tab
-  real(kind=pr):: alpha 
+  real(kind=pr):: alpha, sommetBnBn
   integer:: i, j
 
 !==================================================================================================================================
@@ -25,29 +25,25 @@ program main
   e=0.0001
   kmax=1000000000
   m=2
-  n=3
+  n=4
   allocate(A(n,n),b(n),x0(n),x(n))
 
+  A=1._pr
   A(1,1)=2._pr
   A(2,2)=2._pr
   A(3,3)=2._pr
-  
-  A(1,2)=1._pr
-  A(2,1)=1._pr
-  A(2,3)=1._pr
-  A(3,2)=1._pr
-  A(3,1)=1._pr
-  A(1,3)=1._pr
-
+  A(4,4)=2._pr
 
   b(1)=1._pr
   b(2)=2._pr
   b(3)=3._pr
+  b(4)=4._pr
 
 
   x0(1)=1._pr
   x0(2)=1._pr
   x0(3)=1._pr
+  x0(4)=1._pr
   !test des methodes
   print*, "test des methodes de resolution Ax=b  pour une matrice simple"
   print*, "A:", A
@@ -91,7 +87,7 @@ program main
   kmax=1000000000
 
 
-  allocate(An(n,n),Bn(n,n),Tn(n,n),x0(n),x(n),b(n),tab(n*n))
+  allocate(An(n,n),Bn(n,n),Tn(n,n),x0(n),x(n),b(n),tab(n))
 
   An=0._pr
   Bn=0._pr
@@ -106,15 +102,19 @@ program main
   !Tn=tBn Bn
   Tn=MATMUL(transpose(Bn),Bn)
   
-  !alpha=max(tBnBN)(i,j)
+  !alpha=max sur i somme sur j(tBnBN)(i,j)
   !remplissage de tab
   do i=1,n
+     sommetBnBn=0._pr
      do j=1,n
-        tab(i+(j-1)*n)=Tn(i,j)
+        sommetBnBn=sommetBnBn+Tn(i,j)
      end do
+     tab(i)=sommetBnBN
   end do
 
   alpha=MAXVAL(tab)
+
+  print*, "alpha", alpha
     
   !remplissage de An à partir de Bn
   do i=1,n
@@ -154,3 +154,4 @@ program main
   deallocate(An,Bn,Tn,x0,x,b)
   
 end program main
+
