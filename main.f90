@@ -24,48 +24,42 @@ program main
 
   e=0.0001
   kmax=1000000000
-  m=2
-  n=4
+  m=10
+  n=500
   allocate(A(n,n),b(n),x0(n),x(n))
 
   A=1._pr
-  A(1,1)=2._pr
-  A(2,2)=2._pr
-  A(3,3)=2._pr
-  A(4,4)=2._pr
+  do i=1,n
+     A(i,i)=2._pr
+  end do
 
-  b(1)=1._pr
-  b(2)=2._pr
-  b(3)=3._pr
-  b(4)=4._pr
+  do i=1,n
+     b(i)=i
+  end do
 
+  x0=0._pr
 
-  x0(1)=1._pr
-  x0(2)=1._pr
-  x0(3)=1._pr
-  x0(4)=1._pr
+  
   !test des methodes
   print*, "test des methodes de resolution Ax=b  pour une matrice simple"
-  print*, "A:", A
-  print*, "b:", b
-  print*, "x0:", x0
+  print*, "taille du systeme:", n
   print*,"precision:", e
   print*, "m:", m
   print*, "methode du gradient a pas optimal"
   x=grad_pas_optimal(A,b,x0,kmax,e)
-  print*, x
+ ! print*, x
 
   print*, "methode du residu minimum"
   x=res_min(A,b,x0,kmax,e)
-  print*, x
+ ! print*, x
 
   print*, "methode du gradient conjugue"
   x=gradient_conjugue(A,b,x0,kmax,e)
-  print*, x
+ ! print*, x
   
   print*, "methode FOM"
   x=FOM(A,b,x0,kmax,e,m)
-  print*, x
+  !print*, x
 
   print*, "methode GMRes"
  ! x=GMRes(A,b,x0,kmax,e,m)
@@ -154,4 +148,3 @@ program main
   deallocate(An,Bn,Tn,x0,x,b)
   
 end program main
-
