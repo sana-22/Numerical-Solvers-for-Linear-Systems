@@ -8,20 +8,22 @@ module modalgo
 
 contains
 
-!=========================================================================================================================================
+!=======================================================================================================================================================
 
     !fonction pour la methode de gradient a  pas optimal
 
     function grad_pas_optimal(A,b,x0,kmax,e) result(x)
 
-      !declaration des arguments
+      !variables d'entree
       real(kind=Pr), intent(in):: e                     !precision
       integer, intent(in)::kmax                         !test d'arret
       real(kind=Pr), dimension(:,:), intent(in)::A      !matrice du systeme lineaire
       real(kind=Pr),dimension(:), intent(in):: b, x0    !second membre + vecteur initial
+
+      !sortie
       real(kind=Pr), dimension(:),allocatable::x        !solution approchee
 
-      !varaibles locales
+      !variables locales
       real(kind=Pr), dimension(:), allocatable :: r   !residu reel
       real(kind=Pr), dimension(:), allocatable :: z
       real(kind=Pr) :: alpha, beta
@@ -61,7 +63,7 @@ contains
     end function grad_pas_optimal
       
       
-!===================================================================================================================================    
+!==============================================================================================================================================    
     !fonction pour la methode du residu minimum
 
     function res_min(A,b,x0,kmax,e)result(x)
@@ -114,11 +116,9 @@ contains
 
 
 
+!=====================================================================================================================================================
 
-
-
-  !=====================================================================================================================================================
-
+  
 !fonction pour la methode du gradient conjugue
   
 function gradient_conjugue(A,b,x0,kmax,e) result(x)
@@ -128,8 +128,10 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     real(kind=pr),dimension(:),intent(in):: b, x0     !vecteur second membre et donnée intiale
     integer,intent(in):: kmax                         !test d'arret
     real(kind=pr),intent(in):: e                      !precision
+
     !variables de sortie
     real(kind=pr),dimension(:),allocatable:: x        !solution approchée du systeme 
+
     !variables locales
     real(kind=pr),dimension(:),allocatable:: r, rplus, p, z
     real(kind=pr):: beta, alpha, gamma, w
@@ -174,80 +176,30 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
   end function gradient_conjugue
 
-
-  !===================================================================================================================================================
-
-!algorithme d'Arnoldi: construction de Vm et Hm
-  
-  subroutine Arnoldi(r,A,Hm,Vm)
-
-    !variables d'entrees
-    real(kind=pr),dimension(:,:),intent(in):: A
-    real(kind=pr),dimension(:),intent(in)::r                !vecteur qui definit l'espace de Krylov {v,Av,.....,A(m-1)v}
-   
-    !variables de sortie
-    real(kind=pr),dimension(:,:),intent(inout):: Vm     !matrice qui contient les vecteurs de la nouvelle base orthonormale
-    real(kind=pr),dimension(:,:),intent(inout):: Hm     !matrice de Hessenberg qui contient les coefficients de la methode de Gram-Schmidt
-    
-    !variables locales
-    integer:: n, m, i, j
-    real(kind=pr),dimension(:),allocatable:: wj, vj
-   
-    !initialisation
-    n=size(A(:,1))
-    m=size(Hm(1,:))
-    
-    allocate(wj(n),vj(n))
-    Hm=0._pr
-    Vm=0._pr
-
-    !algorithme d'Arnoldi
-
-    Vm(:,1)=1._pr/NORM2(r)*r
-    do j=1,m
-       vj=Vm(1:n,j)
-       wj=MATMUL(A,vj)   
-       do i=1,j
-          Hm(i,j)=DOT_PRODUCT(wj,Vm(1:n,i))
-          wj=wj-Hm(i,j)*Vm(1:n,i)
-       end do
-       Hm(j+1,j)=NORM2(wj)
-
-       if( Hm(j+1,j)==0) then
-          stop
-       end if
-       Vm(1:n,j+1)=1._pr/Hm(j+1,j)*wj
-       
-    end do
-    deallocate(wj,vj)
-    
-  end subroutine Arnoldi
-
-
-  !===============================================================================================================================================
+!===============================================================================================================================================
 
 !fonction qui contient la methode de resolution FOM
 
   
   function FOM(A,b,x0,kmax,e,m) result(x)
-     !variables d'entree
+
+    !variables d'entree
     real(kind=pr),dimension(:,:),intent(in):: A       !matrice du systeme lineaire
     real(kind=pr),dimension(:),intent(in):: b, x0     !vecteur second membre et donnée intiale
     integer,intent(in):: kmax                         !test d'arret
     real(kind=pr),intent(in):: e                      !precision
     integer,intent(in):: m                            !caracterise espace de krylov dans lequel on se place
+
     !variables de sortie
     real(kind=pr),dimension(:),allocatable:: x        !solution approchée du systeme
+
     !variables locales
     real(kind=pr),dimension(:),allocatable:: r        !residu reel
     real(kind=pr),dimension(:),allocatable:: y, u, betae1
     real(kind=pr):: beta, somme
     integer:: k, n, i, p
-    real(kind=pr),dimension(:,:),allocatable:: Hm, Vm    !matrice de Hessenberg et matrice de la nouvelle base orthogonal extrait de A à partir du résidu
-    real(kind=pr),dimension(:,:),allocatable:: Qm, Rm    ! matrice de decomposition QR de Hmbarre
-
-          
-    
+    real(kind=pr),dimension(:,:),allocatable:: Hm, Vmplus    !matrice de Hessenberg et matrice de la nouvelle base orthogonal extrait de A à partir du résidu
+    real(kind=pr),dimension(:,:),allocatable:: Qm, Rm    ! matrice de decomposition QR de Hmbarre 
 
     !initialisation
     n=size(A(:,1))
@@ -260,14 +212,13 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     y=0._pr
     
     allocate(Hm(m+1,m))
-    allocate(Vm(n,m+1))
-    Hm=0._pr
-    Vm=0._pr
+    allocate(Vmplus(n,m+1))
 
     
     allocate(Qm(m,m),Rm(m,m))
     Qm=0._pr
     Rm=0._pr
+    
     allocate(u(m),betae1(m))
     u=0._pr
     betae1=0._pr
@@ -278,44 +229,38 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     !algorithme de la methode
     
     do while (beta>e.and.k<= kmax)
-       
+
+       Hm=0._pr
+       Vmplus=0._pr
        !obtention de Hm et Vm par la methode d'Arnoldi en partant de r et A
-    call Arnoldi(r,A,Hm,Vm)
-    
-   ! print*, "tVmAVm:", MATMUL(transpose(Vm(1:n,1:m)),MATMUL(A,Vm(1:n,1:m)))
-    !print*, "Hmbarre:", Hm(1:m,1:m)
-   ! print*, "AVm:", MATMUL(A,Vm(1:n,1:m))
-      ! print*, "Vm+1Hm:", MATMUL(Vm,Hm)
-       !resolution de Hmbarre*y=beta*e1
+       call Arnoldi(r,A,Hm,Vmplus)
        
+       !resolution de Hmbarre*y=beta*e1
+
        !obtention de la decomposition QR de Hmbarre pour pouvoir réaliser la résolution
        call QR(Hm(1:m,1:m),Qm,Rm)
 
        !resolution de Qm*u=betae1
        !Q appartient au groupe orthogonal donc TQmQm=I donc u=TQm*betae1
-       u=MATMUL(transpose(Qm),betae1)
-       !u=MATMUL(transpose(Qm),MATMUL(transpose(Vm(1:n,1:m)),r))
-      
-       
+       u=MATMUL(transpose(Qm),betae1)  
        !resolution de Rm*y=u
        !Rm est triangulaire superieure a diagonale non nulle
-       !methode de remontee
-       
+       !methode de descente
        y(m)=1._pr/Rm(m,m)*u(m)
        do i=m-1,1,-1
           somme=0._pr
           do p=i+1,m
              somme=somme+Rm(i,p)*y(p)
           end do
-          y(i)=1._pr/Rm(i,i)*(u(i)-somme)
+          y(i)=(u(i)-somme)/Rm(i,i)
        end do
         
-       x=x+MATMUL(Vm(1:n,1:m),y)
-       r=-Hm(m+1,m)*y(m)*Vm(1:n,m+1)
-       ! r=r-MATMUL(A,MATMUL(Vm(1:n,1:m),y))
+       x=x+MATMUL(Vmplus(1:n,1:m),y)   
+       r=-Hm(m+1,m)*y(m)*Vmplus(1:n,m+1)
        beta=NORM2(r)
+       print*, beta, y(m), Hm(m+1,m)
        k=k+1    
-   end do
+    end do
     
     if (k>kmax) then
        print*, 'tolerance non atteinte' , beta
@@ -323,7 +268,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        print*, "convergence en :", k, "iterations"
     end if
 
-    deallocate(r,y,Hm,Vm,Qm,Rm,u,betae1)
+    deallocate(r,y,Hm,Vmplus,Qm,Rm,u,betae1)
     
   end function FOM
 
@@ -345,43 +290,72 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     real(kind=pr),dimension(:),allocatable:: x        !solution approchée du systeme
 
     !variables locales
-    real(kind=pr),dimension(:),allocatable:: r, y, betae1
+    real(kind=pr),dimension(:),allocatable:: r, y, betae1, u
     real(kind=pr):: beta
-    integer:: n,k
-    real(kind=pr),dimension(:,:),allocatable:: Hm, Vm
+    integer:: n,k, p, i
+    real(kind=pr):: somme
+    real(kind=pr),dimension(:,:),allocatable:: Hm, Vmplus, Qm, Rm
+    
     
     !initialisation
     n=size(A(:,1))
     
-    allocate(x(n),r(n),betae1(n))
+    allocate(x(n),r(n))
     x=x0
     r=b-MATMUL(A,x0)
     beta=NORM2(r)
-
+    !definition de betae1
+    allocate(betae1(m),u(m))
+    u=0._pr
     betae1=0._pr
+    betae1(1)=beta
+
     
     allocate(y(m))
     y=0._pr
     
     allocate(Hm(m+1,m))
-    allocate(Vm(n,m+1))
-    Hm=0._pr
-    Vm=0._pr
+    allocate(Vmplus(n,m+1))
+    allocate(Rm(m,m),Qm(m,m))
+  
     
     k=0
 
     !algorithme de la  methode
 
     do while (beta>e.and.k<= kmax)
-       call Arnoldi(r,A,Hm,Vm)
-       !calcul de y=argmin(beta e1 - Hmy)
 
-       x=x+MATMUL(Vm(1:n,1:m),y)
        
-       !definition de betae1
-       betae1(1)=beta
-       r=betae1-MATMUL(Hm(1:m,1:m),y)
-       beta=NORM2(r)
+       Hm=0._pr
+       Vmplus=0._pr
+
+       !obtention de Hm et Vm+1
+       call Arnoldi(r,A,Hm,Vmplus)
+
+       !calcul de y=argmin(beta e1 - Hmy)
+       !resolution de Hmbarre*y=beta*e1
+       !obtention de la decomposition QR de Hmbarre pour pouvoir réaliser la résolution
+       call QR(Hm(1:m,1:m),Qm,Rm)
+
+       !resolution de Qm*u=betae1
+       !Q appartient au groupe orthogonal donc TQmQm=I donc u=TQm*betae1
+       u=MATMUL(transpose(Qm),betae1)
+       
+       !resolution de Rm*y=u
+       !Rm est triangulaire superieure a diagonale non nulle
+       !methode de descente
+       y(m)=1._pr/Rm(m,m)*u(m)
+       do i=m-1,1,-1
+          somme=0._pr
+          do p=i+1,m
+             somme=somme+Rm(i,p)*y(p)
+          end do
+          y(i)=(u(i)-somme)/Rm(i,i)
+       end do
+       
+       x=x+MATMUL(Vmplus(1:n,1:m),y)  
+       r=r-MATMUL(Vmplus,MATMUL(Hm,y))
+       beta=NORM2(betae1-MATMUL(Hm(1:m,1:m),y))
        k=k+1
        
     end do
@@ -393,21 +367,71 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        print*, "convergence en :", k, "iterations"
     end if
 
-    deallocate(r,betae1,y,Hm,Vm)
+    deallocate(r,betae1,y,Hm,Vmplus,Rm,Qm,u)
     
   end function GMRes
+!===================================================================================================================================================
 
-  !===========================================================================================================================================
+  !algorithme d'Arnoldi: methode d'orthogonalisation de Gram-Schmidt modifiee
+  !obtention de la matrice Vmplus qui contient tout les nouveaux vecteurs de la nouvelle base
+  
+  subroutine Arnoldi(r,A,Hm,Vmplus)
 
-  !fonction qui contient la decomposition polaire matrice A de taille m*m dans le cas particulier d'une matrice de Hessenberg A=Hmbarre
-  !methode de Givens
+    !variables d'entrees
+    real(kind=pr),dimension(:,:),intent(in):: A
+    real(kind=pr),dimension(:),intent(in)::r                !vecteur qui definit l'espace de Krylov {v,Av,.....,A(m-1)v}
+   
+    !variables de sortie
+    real(kind=pr),dimension(:,:),intent(inout):: Vmplus    !matrice qui contient les vecteurs de la nouvelle base orthonormale
+    real(kind=pr),dimension(:,:),intent(inout):: Hm     !matrice de Hessenberg qui contient les coefficients de la methode de Gram-Schmidt
+    
+    !variables locales
+    integer:: n, m, i, j
+    real(kind=pr),dimension(:),allocatable:: wj, vj
+   
+    !initialisation
+    n=size(A(:,1))
+    m=size(Hm(1,:))
+    
+    allocate(wj(n),vj(n))
+    Hm=0._pr
+    Vmplus=0._pr
+
+    !algorithme d'Arnoldi
+
+    Vmplus(1:n,1)=r/NORM2(r)
+    do j=1,m
+       vj=Vmplus(:,j)
+       wj=MATMUL(A,vj)
+       do i=1,j
+          Hm(i,j)=DOT_PRODUCT(wj,Vmplus(:,i))
+          wj=wj-Hm(i,j)*Vmplus(:,i)
+       end do
+      
+       Hm(j+1,j)=NORM2(wj)
+
+       if( Hm(j+1,j)==0) then
+          stop
+       end if
+       Vmplus(:,j+1)=wj/Hm(j+1,j)
+       
+    end do
+    deallocate(wj,vj)
+    
+  end subroutine Arnoldi
+
+!===========================================================================================================================================
+
+  !fonction qui contient la decomposition polaire matrice A de taille m*m dans le cas particulier d'une matrice de Hessenberg 
+  !la methode de Givens est utilisee 
 
   subroutine QR(A,Q,R)
 
-    !variables d'entree de sortie
-    real(kind=pr),dimension(:,:),intent(in):: A
-    real(kind=pr),dimension(:,:),intent(inout):: Q
-    real(kind=pr),dimension(:,:),intent(inout):: R
+    !variables d'entree et de sortie
+    real(kind=pr),dimension(:,:),intent(in):: A           !matrice dont on effectue la decomposition A=QR
+    real(kind=pr),dimension(:,:),intent(inout):: Q        !matrice du groupe orthogonal
+    real(kind=pr),dimension(:,:),intent(inout):: R        !matrice triangulaire superieure
+
     !variables internes
     integer:: m, i, j, k
     real(kind=pr),dimension(:,:),allocatable:: P
@@ -417,7 +441,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 
     !initialisation
     m=size(A(1,:))
-
     allocate(P(m,m),TQ(m,m))
     TQ=0._pr
     do i=1,m
@@ -430,7 +453,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     c=0._pr
     s=0._pr
 
-    !m-1 rotations 
+    !m-1 rotations a effectuer
     do k=1,m-1
 
        !remise à 0 de P
