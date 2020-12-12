@@ -70,10 +70,15 @@ program main
   print*, "methode GMRes"
   x=GMRes(A,b,x0,kmax,e,m)
   print*, x
+  print*, "methode GMRes amelioree pour une matrice sdp"
+  x=GMRes_sdp(A,b,x0,kmax,e,m)
+  print*,x
   
   deallocate(A,b,x0,x)
-
-  
+!====================================================================================================================================================
+  !tests de FOM et GMRes classiques sur des matrices non sdp de petite taille
+  print*, "'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
+  print*, "test de FOM et GMRes sur une matrice quelconque non sdp de petite taille"
 
 !====================================================================================================================================================
   !tests sur An=In-alpha*tBn* Bn 
@@ -136,16 +141,21 @@ program main
   x=grad_pas_optimal(An,b,x0,kmax,e)
   print*, "methode du residu minimum"
   x=res_min(An,b,x0,kmax,e)
- ! print*, x
   print*, "methode du gradient conjugue"
   x=gradient_conjugue(An,b,x0,kmax,e)
-  print*, x 
+ ! print*, x 
   print*, "methode FOM"
  ! x=FOM(An,b,x0,kmax,e,m)
- ! print*, x
+  ! print*, x
+  print*, "methode FOM amelioree pour une matrice sdp"
+  !x=FOM_sdp(An,b,x0,kmax,e,m)
+  !print*, x
   print*, "methode GMRes"
   x=GMRes(An,b,x0,kmax,e,m)
   print*, x
+  print*, "methode GMRes amelioree pour une matrice sdp"
+  x=GMRes_sdp(An,b,x0,kmax,e,m)
+  print*,x
  
   deallocate(An,Bn,Tn,x0,x,b)
   
