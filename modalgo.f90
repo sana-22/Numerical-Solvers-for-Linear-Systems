@@ -213,9 +213,8 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     
     allocate(Hm(m+1,m))
     allocate(Vmplus(n,m+1))
-
-    
     allocate(Qm(m,m),Rm(m,m)) 
+
     allocate(u(m),betae1(m))
     u=0._pr
     betae1=0._pr
@@ -231,6 +230,9 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        Vmplus=0._pr
        Qm=0._pr
        Rm=0._pr
+
+       betae1=0._pr
+       betae1(1)=beta
        
        !obtention de Hm et Vm par la methode d'Arnoldi en partant de r et A
        call Arnoldi(r,A,Hm,Vmplus)
@@ -256,9 +258,9 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        end do
         
        x=x+MATMUL(Vmplus(1:n,1:m),y)   
-       r=-Hm(m+1,m)*y(m)*Vmplus(1:n,m+1)
+       !r=-Hm(m+1,m)*y(m)*Vmplus(1:n,m+1)
+       r=r-MATMUL(A,MATMUL(Vmplus(1:n,1:m),y))
        beta=NORM2(r)
-       print*, beta, y(m), Hm(m+1,m)
        k=k+1    
     end do
     
@@ -304,13 +306,13 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     x=x0
     r=b-MATMUL(A,x0)
     beta=NORM2(r)
-    !definition de betae1
+   
     allocate(betae1(m),u(m))
     u=0._pr
+     !definition de betae1
     betae1=0._pr
     betae1(1)=beta
 
-    
     allocate(y(m))
     y=0._pr
     
@@ -330,6 +332,8 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        Qm=0._pr
        Rm=0._pr
 
+       betae1=0._pr
+       betae1(1)=beta
        !obtention de Hm et Vm+1
        call Arnoldi(r,A,Hm,Vmplus)
 
@@ -355,7 +359,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        end do
        
        x=x+MATMUL(Vmplus(1:n,1:m),y)  
-       r=r-MATMUL(Vmplus,MATMUL(Hm,y))
+       r=r-MATMUL(A,MATMUL(Vmplus(1:n,1:m),y))
        beta=NORM2(betae1-MATMUL(Hm(1:m,1:m),y))
        k=k+1
        
@@ -427,11 +431,16 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        Vmplus=0._pr
        L=0._pr
        tL=0._pr
+
+       betae1=0._pr
+       betae1(1)=beta
        !obtention de Hm et Vm par la methode d'Arnoldi ameliore dans le cas ou A est sdp en partant de r et A
-       call Arnoldi_tridiag(r,A,Hm,Vmplus)
+       ! call Arnoldi_tridiag(r,A,Hm,Vmplus)
+       call Arnoldi(r,A,Hm,Vmplus)
 
        !obtention de la decomposition de Cholesky amelioree de Hm
-       L=cholesky_tridiag(Hm(1:m,1:m))
+       ! L=cholesky_tridiag(Hm(1:m,1:m))
+       L=chol(Hm(1:m,1:m))
        
        !resolution de Hmbarre*y=beta*e1
        !resolution de Lu=betae1
@@ -460,9 +469,9 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        end do
         
        x=x+MATMUL(Vmplus(1:n,1:m),y)   
-       r=-Hm(m+1,m)*y(m)*Vmplus(1:n,m+1)
+       ! r=-Hm(m+1,m)*y(m)*Vmplus(1:n,m+1)
+       r=r-MATMUL(Vmplus,MATMUL(Hm,y))
        beta=NORM2(r)
-       print*, beta, y(m), Hm(m+1,m)
        k=k+1    
     end do
     
@@ -512,7 +521,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     u=0._pr
     betae1=0._pr
     betae1(1)=beta
-
     
     allocate(y(m))
     y=0._pr
@@ -532,12 +540,18 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        L=0._pr
        tL=0._pr
 
-       !obtention de Hm et Vm+1 par la methode d'Arnoldi amelioree 
-       call Arnoldi_tridiag(r,A,Hm,Vmplus)
+       betae1=0._pr
+       betae1(1)=beta
+
+       !obtention de Hm et Vm+1 par la methode d'Arnoldi amelioree
+      
+       ! call Arnoldi_tridiag(r,A,Hm,Vmplus)
+       call Arnoldi(r,A,Hm,Vmplus)
+ 
 
        !obtention de la decomposition de Cholesky amelioree de Hm
-       L=cholesky_tridiag(Hm(1:m,1:m))
-       
+       L=chol(Hm(1:m,1:m))
+     
        !calcul de y=argmin(beta e1 - Hmy)
        !resolution de Hmbarre*y=beta*e1
 
@@ -552,7 +566,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
           end do
           u(i)=-somme/L(i,i)
        end do
-       
+  
        !resolution de tLy=u
        !tL est triangulaire superieure a diagonale non nulle
        !methode de descente
@@ -568,7 +582,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        
        x=x+MATMUL(Vmplus(1:n,1:m),y)  
        r=r-MATMUL(Vmplus,MATMUL(Hm,y))
-       beta=NORM2(betae1-MATMUL(Hm(1:m,1:m),y))
+       beta=NORM2(r)
        k=k+1
        
     end do
@@ -630,6 +644,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        Vmplus(:,j+1)=wj/Hm(j+1,j)
        
     end do
+
     deallocate(wj,vj)
     
   end subroutine Arnoldi
@@ -682,6 +697,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        Vmplus(:,j+1)=wj/Hm(j+1,j)
        
     end do
+    
     deallocate(wj,vj)
     
   end subroutine Arnoldi_Tridiag
@@ -759,6 +775,53 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 !===========================================================================================================================================
   !contient la decomposition de Cholesky d'une matrice tridiagonale sdp
 
+  function chol(A)result(L)
+
+     Implicit None
+
+     !les variables
+
+     integer                              :: i,j,k,n
+     real(Pr),dimension(:,:),intent(in)   :: A
+     real(Pr),dimension(:,:),allocatable  :: L
+     real(Pr)                             :: s,p
+
+     !initialisations
+     n=size(A,1)
+     Allocate(L(1:n,1:n))
+     L=0
+
+     !calcul de L
+     !boucle sur toutes les colonnes
+     do i=1,n
+        s=0._PR
+        !element diagonal
+        do k=1,i-1
+           s= s + (L(i,k))**2
+        end do
+
+        !ici on vérifie que la matrice est sdp
+
+        if (A(i,i)-s<=0) then
+           print*, "attention la matrice n'est pas définie positive"
+           print*, A(i,i)-s
+        end if
+
+        L(i,i)=sqrt(A(i,i)-s)
+
+        !boucle sur tous les éléments extra-diagonaux
+        do j=i+1,n
+           p=0._PR
+           do k=1,i-1
+              p=p+ L(i,k)*L(j,k)
+           end do
+           L(j,i)=(A(j,i)-p)/L(i,i)
+        end do
+     end do
+
+   end function chol
+
+
   function cholesky_tridiag(A) result(L)
 
     !variables d'entree
@@ -796,32 +859,6 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     L(m,m)=sqrt(A(m,m)-somme1)/L(m,m)
 
   end function cholesky_tridiag
-!===========================================================================================================================================
-  !Fonction pour le calcul de la normeInf
 
-  ! function norme_inf (a) result(norme)
-  !implicit none
-  ! --- arguments
-  !type (element), dimension(:), intent(in) :: a
-  !real :: norme
-  ! --- variables locales
-       ! integer :: i, taille
-        !real, dimension (:) , allocatable :: y
-        ! --- calcul taille de la matrice pleine associee
-        !taille=0
-            !do i=1, size (a)
-              !  taille=max (taille, a(i)%indl, a (i)%indc )
-           ! end do
-        ! --- calcul de la norme
-       ! norme=0.
-       ! allocate (y(1:taille))
-       ! y=0.
-            !do i=1, size (a)
-               ! y(a(i)%indl)=y (a(i)%indl)+abs (a(i)%coef)
-          !  end do
-       ! norme=maxval(y)
-        !deallocate(y)
-   ! end function norme_inf
-    
-
+  
 end module modalgo
