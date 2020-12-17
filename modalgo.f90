@@ -435,12 +435,11 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        betae1=0._pr
        betae1(1)=beta
        !obtention de Hm et Vm par la methode d'Arnoldi ameliore dans le cas ou A est sdp en partant de r et A
-       ! call Arnoldi_tridiag(r,A,Hm,Vmplus)
-       call Arnoldi(r,A,Hm,Vmplus)
+       call Arnoldi_tridiag(r,A,Hm,Vmplus)
 
        !obtention de la decomposition de Cholesky amelioree de Hm
        ! L=cholesky_tridiag(Hm(1:m,1:m))
-       L=chol(Hm(1:m,1:m))
+       L=cholesky_tridiag(Hm(1:m,1:m))
        
        !resolution de Hmbarre*y=beta*e1
        !resolution de Lu=betae1
@@ -543,14 +542,12 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        betae1=0._pr
        betae1(1)=beta
 
-       !obtention de Hm et Vm+1 par la methode d'Arnoldi amelioree
-      
-       ! call Arnoldi_tridiag(r,A,Hm,Vmplus)
-       call Arnoldi(r,A,Hm,Vmplus)
- 
+       !obtention de Hm et Vm+1 par la methode d'Arnoldi amelioree dans le cas ou Hmbarre est une matrice tridiagonale
+     
+       call Arnoldi_tridiag(r,A,Hm,Vmplus)
 
        !obtention de la decomposition de Cholesky amelioree de Hm
-       L=chol(Hm(1:m,1:m))
+       L=cholesky_tridiag(Hm(1:m,1:m))
      
        !calcul de y=argmin(beta e1 - Hmy)
        !resolution de Hmbarre*y=beta*e1
@@ -775,7 +772,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
 !===========================================================================================================================================
   !contient la decomposition de Cholesky d'une matrice tridiagonale sdp
 
-  function chol(A)result(L)
+  function chol(A )result(L)
 
      Implicit None
 
@@ -789,7 +786,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
      !initialisations
      n=size(A,1)
      Allocate(L(1:n,1:n))
-     L=0
+     L=0._pr
 
      !calcul de L
      !boucle sur toutes les colonnes
@@ -838,25 +835,26 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     L=0._pr
    
     !algorithme de decomposition remplissage de L
-    !pour j=1
-    L(1,1)=sqrt(A(1,1))
-    L(2,1)=A(2,1)/L(1,1)
-    !cas general
-    do j=2,m-1
+    
+    do j=1,m-1
         somme1=0._pr
-        somme2=0._pr
        do k=1,j-1
           somme1=somme1+L(j,k)**2
           somme2=somme2+L(j+1,j)*L(j,k)
        end do
        L(j,j)=sqrt(A(j,j)-somme1)
+       somme2=0._pr
+       do k=1,j-1
+          somme2=somme2+ L(j,k)*L(j+1,k)
+       end do
        L(j+1,j)=(A(j+1,j)-somme2)/L(j,j)
     end do
     !cas j=m
+    somme1=0._pr
     do k=1,m-1
        somme1=somme1+L(m,k)**2
     end do
-    L(m,m)=sqrt(A(m,m)-somme1)/L(m,m)
+    L(m,m)=sqrt(A(m,m)-somme1)
 
   end function cholesky_tridiag
 
