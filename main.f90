@@ -50,7 +50,14 @@ program main
   print*, "5)GMRes:"
   read*, k
   
-  
+  write(nc,*) n
+  open(unit=10,file='grad_pas_optimal_n='//trim(adjustl(nc))//'.dat')
+  open(unit=11,file='grad_residu_min_n='//trim(adjustl(nc))//'.dat')
+  open(unit=12,file='grad_conjugue_n='//trim(adjustl(nc))//'.dat')
+  open(unit=13,file='FOM_n='//trim(adjustl(nc))//'.dat')
+  open(unit=14,file='FOM_amelioree_n='//trim(adjustl(nc))//'.dat')
+  open(unit=15,file='GMRes_n='//trim(adjustl(nc))//'.dat')
+  open(unit=16,file='GMRes_amelioree_n='//trim(adjustl(nc))//'.dat')
   kmax=1000000
   allocate(An(n,n),Bn(n,n),Tn(n,n),x0(n),x(n),b(n),tab(n))
 
@@ -103,19 +110,29 @@ program main
      print*, "methode du gradient conjugue"
      x=gradient_conjugue(An,b,x0,kmax,e)
   case(4)
-     print*, "saisir m pour definir l'espace de Krylov :" 
+     print*, "saisir m pour definir l'espace de Krylov :"
      read*, m
-     print*, "methode FOM"
-     x=FOM(An,b,x0,kmax,e,m)
-     print*, "methode FOM amelioree pour une matrice sdp"
-     x=FOM_sdp(An,b,x0,kmax,e,m)
+     y=test_sdp(An)
+     if (y.eqv..True.) then
+       print*, "methode FOM amelioree pour une matrice sdp"
+       x=FOM_sdp(An,b,x0,kmax,e,m)
+     else
+       print*, "methode FOM"
+       x=FOM(An,b,x0,kmax,e,m)
+     end if
+
   case(5)
      print*, "saisir m pour definir l'espace de Krylov :" 
      read*, m
-     print*, "methode GMRes"
-     x=GMRes(An,b,x0,kmax,e,m)
-     print*, "methode GMRes amelioree pour une matrice sdp"
-     x=GMRes_sdp(An,b,x0,kmax,e,m)
+     y=test_sdp(An)
+     if (y.eqv..True.) then
+       print*, "methode GMRes amelioree pour une matrice sdp"
+       x=GMRes_sdp(An,b,x0,kmax,e,m)
+     else
+       print*, "methode GMRes"
+       x=GMRes(An,b,x0,kmax,e,m)
+     end if
+
   end select
  
   deallocate(An,Bn,Tn,x0,x,b)
