@@ -49,6 +49,7 @@ contains
          r=r-alpha*z
          beta=NORM2(r)
          k=k+1
+         write(10,*)k, beta
 
       end do
 
@@ -100,6 +101,7 @@ contains
          r=r-alpha*z
          beta=NORM2(r)
          k=k+1
+         write(11,*)k, beta
 
       end do
 
@@ -161,6 +163,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        r=rplus
        beta=NORM2(r)
        k=k+1
+       write(12,*)k, beta
     end do
 
     
@@ -262,6 +265,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        r=r-MATMUL(A,MATMUL(Vmplus(1:n,1:m),y))
        beta=NORM2(r)
        k=k+1    
+       write(13,*)k, beta
     end do
     
     if (k>kmax) then
@@ -362,6 +366,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        r=r-MATMUL(A,MATMUL(Vmplus(1:n,1:m),y))
        beta=NORM2(betae1-MATMUL(Hm(1:m,1:m),y))
        k=k+1
+       write(15,*)k,beta
        
     end do
 
@@ -472,6 +477,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        r=r-MATMUL(Vmplus,MATMUL(Hm,y))
        beta=NORM2(r)
        k=k+1    
+       Write(14,*)k,beta
     end do
     
     if (k>kmax) then
@@ -581,6 +587,7 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
        r=r-MATMUL(Vmplus,MATMUL(Hm,y))
        beta=NORM2(r)
        k=k+1
+       write(16,*)k,beta
        
     end do
 
@@ -857,6 +864,46 @@ function gradient_conjugue(A,b,x0,kmax,e) result(x)
     L(m,m)=sqrt(A(m,m)-somme1)
 
   end function cholesky_tridiag
+  
+  
+!==============================================================================================================================================
+!==============================================================================================================================================
+
+Function test_sdp(A)Result(y)
+!le test de si A est sdp ou non est basée sur la décomposition de cholesky
+
+  Implicit None
+
+  integer                              :: i,k,n
+  real(Pr),dimension(:,:),intent(in)   :: A
+  real(Pr),dimension(:,:),allocatable  :: L
+  real(Pr)                             :: s
+  Logical :: y
+
+  !initialisations
+  n=size(A,1)
+  Allocate(L(1:n,1:n))
+  L=0
+
+  !boucle sur toutes les colonnes de L
+  do i=1,n
+     s=0._PR
+     !element diagonal
+     do k=1,i-1
+        s= s + (L(i,k))**2
+     end do
+
+     !ici on vérifie que la matrice est sdp
+
+     if (A(i,i)-s<=0) then
+        y=.False.
+    else
+        y=.True.
+     end if
+  end do
+
+End function
+
 
   
 end module modalgo
